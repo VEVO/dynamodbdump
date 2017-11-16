@@ -1,0 +1,15 @@
+package: github.com/VEVO/dynamodbdump
+import:
+- package: github.com/aws/aws-sdk-go
+  version: ^1.12.28
+  subpackages:
+  - aws
+  - aws/awserr
+  - aws/client
+  - aws/session
+  - service/dynamodb
+  - service/dynamodb/dynamodbiface
+  - service/s3
+  - service/s3/s3manager
+- package: github.com/gobike/envflag
+- package: github.com/segmentio/ksuid
