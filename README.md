@@ -3,10 +3,10 @@
 ## What is it?
 
 This tool performs a backup of a given DynamoDB table and pushes it to a given folder in s3
-in a format compatible with the AWS datapipeline functionnality.
+in a format compatible with the AWS datapipeline functionality.
 
 It is also capable of restoring a backup from s3 to a given table both from
-this tool or from a backup generated using the datapipeline functionnality.
+this tool or from a backup generated using the datapipeline functionality.
 
 Example:
 ```
