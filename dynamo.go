@@ -134,7 +134,7 @@ func (h *AwsHelper) CheckTableEmpty(tbl string) (int64, error) {
 // WriteRequests to be passed to a BatchWriteItem. If (globalIndex - batchSize)
 // is less than 25 this will be the batch size. Else it'll be 25
 //
-// Note that the following criterias will be rejected by the AWS SDK:
+// Note that the following criteria will be rejected by the AWS SDK:
 // * Any individual item in a batch exceeds 400 KB.
 // * The total request size exceeds 16 MB.
 func (h *AwsHelper) channelToWriteRequests(batchSize, globalIndex int64) []*dynamodb.WriteRequest {
