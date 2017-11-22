@@ -3,10 +3,10 @@ GOFILES_NOVENDOR=$(shell find . -type f -name '*.go' -not -path "./vendor/*")
 default: dep lint test
 
 dep:
-	@go get github.com/Masterminds/glide \
-		&& go install github.com/Masterminds/glide
 	@if [ -f "glide.yaml" ] ; then \
-		glide install --strip-vendor; \
+		go get github.com/Masterminds/glide \
+		&& go install github.com/Masterminds/glide \
+		&& glide install --strip-vendor; \
 	else \
 		go get -v ./...; \
 	fi
