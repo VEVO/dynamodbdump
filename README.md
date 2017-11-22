@@ -1,5 +1,8 @@
 # dynamodbdump: DynamoDB backups made easier
 
+[![Build Status](https://travis-ci.org/VEVO/dynamodbdump.svg?branch=master)](https://travis-ci.org/VEVO/dynamodbdump)
+[![Go Report Card](https://goreportcard.com/badge/github.com/VEVO/dynamodbdump)](https://goreportcard.com/report/github.com/VEVO/dynamodbdump)
+
 ## What is it?
 
 This tool performs a backup of a given DynamoDB table and pushes it to a given folder in s3
