@@ -2,11 +2,7 @@
 
 Few ideas that might be worth exploring:
 * update `README.md` with a little more stuffs! (tested with KMS-encrypted tables etc)
-* add the accesskey, secret, region, profile etc in the `README.md`
-* kook to dockerhub public
-* hook travis
 * write tests for all functions and examples too
-* add Kubernetes examples
 * variable StorageClass for backup
 * variable ServerSideEncryption for backup
 * add possible expiration for s3 backup files
