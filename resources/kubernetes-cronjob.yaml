@@ -1,0 +1,45 @@
+---
+apiVersion: batch/v2alpha1
+kind: CronJob
+metadata:
+    name: dynamodbdump-mytable
+    namespace: myteam
+spec:
+    failedJobsHistoryLimit: 5
+    successfulJobsHistoryLimit: 10
+    schedule: 0 2 * * *
+    jobTemplate:
+        spec:
+            template:
+                metadata:
+                    labels:
+                        name: dynamodbdump-mytable
+                spec:
+                    containers:
+                    -   env:
+                        -   name: ACTION
+                            value: backup
+                        -   name: AWS_REGION
+                            value: us-east-1
+                        -   name: BATCH_SIZE
+                            value: '100'
+                        -   name: DYNAMO_TABLE
+                            value: mytable
+                        -   name: S3_BUCKET
+                            value: bucket-for-data-dumps
+                        -   name: S3_DATE_FOLDER
+                            value: '1'
+                        -   name: S3_FOLDER
+                            value: dynamodb/mytable
+                        -   name: WAIT_MS
+                            value: '500'
+                        image: vevo/dynamodbdump:latest
+                        name: dynamodbdump-mytable
+                        resources:
+                            limits:
+                                cpu: 300m
+                                memory: 512Mi
+                            requests:
+                                cpu: 200m
+                                memory: 100Mi
+                    restartPolicy: OnFailure
