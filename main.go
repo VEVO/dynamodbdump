@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/VEVO/dynamodbdump/storage"
 	"github.com/gobike/envflag"
 )
 
@@ -61,6 +62,7 @@ func restoreTable(bucket, prefix, tableName string, batchSize int64, waitPeriod 
 	}
 
 	// For each file in the manifest pull the file, decode each line and add them to a batch and push them into the table (batch size, then wait and continue)
+	go proc.ChannelToTable(tableName, batchSize, waitPeriod)
 	err = proc.S3ToDynamo(tableName, batchSize, waitPeriod)
 	if err != nil {
 		log.Fatalf("[ERROR] Unable to import the full s3 backup to Dynamo: %s\nAborting...\n", err)
