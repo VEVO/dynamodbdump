@@ -1,6 +1,7 @@
 # dynamodbdump: DynamoDB backups made easier
 
-[![Build Status](https://travis-ci.org/VEVO/dynamodbdump.svg?branch=master)](https://travis-ci.org/VEVO/dynamodbdump)
+[![GoDoc](https://godoc.org/github.com/VEVO/dynamodbdump?status.svg)](https://godoc.org/github.com/VEVO/dynamodbdump)
+[![Test Status](https://github.com/VEVO/dynamodbdump/workflows/tests/badge.svg)](https://github.com/VEVO/dynamodbdump/actions?query=workflow%3Atests)
 [![Go Report Card](https://goreportcard.com/badge/github.com/VEVO/dynamodbdump)](https://goreportcard.com/report/github.com/VEVO/dynamodbdump)
 
 ## Table of Contents
@@ -48,24 +49,24 @@ make build
 
 Note: the command-line options are available via the `-h` argument. Example:
 ```
-$ ./dynamodbdump -h                                                               
-Usage of ./dynamodbdump:                                                                                                                    
-  -action string                                                                                                                            
-        Action to perform. Only accept 'backup' or 'restore'. Environment variable: ACTION (default "backup")                               
-  -batch-size int                                                                                                                           
-        Max number of records to read from the dynamo table at once or to write in case of a restore. Environment variable: BATCH_SIZE (default 1000)                                                                                                                                   
-  -dynamo-table string                                                                                                                      
-        Name of the Dynamo table to backup from or to restore in. Environment variable: DYNAMO_TABLE                                        
-  -restore-append                                                                                                                           
-        Appends the rows to a non-empty table when restoring instead of aborting. Environment variable: RESTORE_APPEND                      
-  -s3-bucket string                                                                                                                         
-        Name of the s3 bucket where to put the backup or where to restore from. Environment variable: S3_BUCKET                             
-  -s3-date-folder                                                                                                                           
-        Adds an autogenenated suffix folder named using the UTC date in the format YYYY-mm-dd-HH24-MI-SS to the provided S3 folder. Environment variable: S3_DATE_FOLDER                                                                                                                
-  -s3-folder string                                                                                                                         
-        Path inside the s3 bucket where to put or grab (for restore) the backup. Environment variable: S3_FOLDER                            
-  -wait-ms int                                                                                                                              
-        Number of milliseconds to wait between batches. If a ProvisionedThroughputExceededException is encountered, the script will wait twice that amount of time before retrying. Environment variable: WAIT_MS (default 100)  
+$ ./dynamodbdump -h
+Usage of ./dynamodbdump:
+  -action string
+        Action to perform. Only accept 'backup' or 'restore'. Environment variable: ACTION (default "backup")
+  -batch-size int
+        Max number of records to read from the dynamo table at once or to write in case of a restore. Environment variable: BATCH_SIZE (default 1000)
+  -dynamo-table string
+        Name of the Dynamo table to backup from or to restore in. Environment variable: DYNAMO_TABLE
+  -restore-append
+        Appends the rows to a non-empty table when restoring instead of aborting. Environment variable: RESTORE_APPEND
+  -s3-bucket string
+        Name of the s3 bucket where to put the backup or where to restore from. Environment variable: S3_BUCKET
+  -s3-date-folder
+        Adds an autogenenated suffix folder named using the UTC date in the format YYYY-mm-dd-HH24-MI-SS to the provided S3 folder. Environment variable: S3_DATE_FOLDER
+  -s3-folder string
+        Path inside the s3 bucket where to put or grab (for restore) the backup. Environment variable: S3_FOLDER
+  -wait-ms int
+        Number of milliseconds to wait between batches. If a ProvisionedThroughputExceededException is encountered, the script will wait twice that amount of time before retrying. Environment variable: WAIT_MS (default 100)
 ```
 
 
