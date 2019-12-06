@@ -4,34 +4,45 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
+	"github.com/VEVO/dynamodbdump/storage"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/gobike/envflag"
+)
+
+var (
+	dynamoSvc dynamodbiface.DynamoDBAPI
+	c         chan map[string]*dynamodb.AttributeValue
 )
 
 // backupTable manages the consumer from a given DynamoDB table and a producer
 // to a given s3 bucket
-func backupTable(tableName string, batchSize int64, waitPeriod time.Duration, bucket, prefix string, addDate bool) {
+func backupTable(tableName string, batchSize int64, waitPeriod time.Duration, bucket, prefix string, addDate bool, store storage.BackupIface) {
+	var wg sync.WaitGroup
 	if addDate {
 		t := time.Now().UTC()
 		prefix += "/" + t.Format("2006-01-02-15-04-05")
 	}
 
-	proc := NewAwsHelper()
-	go proc.ChannelToS3(bucket, prefix, 10*1024*1024)
+	wg.Add(1)
+	go store.Write(&storage.FileInput{Bucket: aws.String(bucket), Path: aws.String(prefix)}, 10*1024*1024, &wg)
 
-	err := proc.TableToChannel(tableName, batchSize, waitPeriod)
+	err := TableToChannel(dynamoSvc, tableName, batchSize, waitPeriod, c)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	proc.Wg.Wait()
+	wg.Wait()
 }
 
-func restoreTable(bucket, prefix, tableName string, batchSize int64, waitPeriod time.Duration, appendToTable bool) {
-	proc := NewAwsHelper()
-
+func restoreTable(bucket, prefix, tableName string, batchSize int64, waitPeriod time.Duration, appendToTable bool, store storage.BackupIface) {
+	var wg sync.WaitGroup
 	// Check if the table exists and has data in it. If so, abort
-	itemsCount, err := proc.CheckTableEmpty(tableName)
+	itemsCount, err := CheckTableEmpty(dynamoSvc, tableName)
 	if err != nil {
 		log.Fatalf("[ERROR] Unable to retrieve the target table informations: %s\nAborting...\n", err)
 	}
@@ -45,7 +56,7 @@ func restoreTable(bucket, prefix, tableName string, batchSize int64, waitPeriod 
 	}
 
 	// Check if a file "_SUCCESS" is present in the directory
-	if exists, err := proc.ExistsInS3(bucket, fmt.Sprintf("%s/_SUCCESS", prefix)); !exists {
+	if exists, err := store.Exists(&storage.FileInput{Bucket: aws.String(bucket), Path: aws.String(fmt.Sprintf("%s/_SUCCESS", prefix))}); !exists {
 		switch {
 		case err != nil:
 			log.Fatalf("[ERROR] Unable to retrieve the _SUCCESS flag information: %s\nAborting...\n", err)
@@ -55,16 +66,18 @@ func restoreTable(bucket, prefix, tableName string, batchSize int64, waitPeriod 
 	}
 
 	// Pull the manifest from s3 and load it to memory
-	err = proc.LoadManifestFromS3(bucket, fmt.Sprintf("%s/manifest", prefix))
+	err = store.LoadManifest(&storage.FileInput{Bucket: aws.String(bucket), Path: aws.String(fmt.Sprintf("%s/_SUCCESS", prefix))})
 	if err != nil {
 		log.Fatalf("[ERROR] Unable to load the manifest flag information: %s\nAborting...\n", err)
 	}
 
 	// For each file in the manifest pull the file, decode each line and add them to a batch and push them into the table (batch size, then wait and continue)
-	err = proc.S3ToDynamo(tableName, batchSize, waitPeriod)
+	go ChannelToTable(dynamoSvc, tableName, batchSize, waitPeriod, c, &wg)
+	err = store.WriteToDB(tableName, batchSize, waitPeriod, &wg)
 	if err != nil {
 		log.Fatalf("[ERROR] Unable to import the full s3 backup to Dynamo: %s\nAborting...\n", err)
 	}
+	wg.Wait()
 }
 
 func main() {
@@ -84,11 +97,20 @@ func main() {
 	flag.BoolVar(&appendRestore, "restore-append", false, "Appends the rows to a non-empty table when restoring instead of aborting. Environment variable: RESTORE_APPEND")
 	envflag.Parse()
 
+	// For now we only backup to s3 but this can easily evolve in the future
+	awsSess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+	bkpStorage := storage.NewS3Backup(awsSess)
+	dynamoSvc = dynamodb.New(awsSess)
+	c = make(chan map[string]*dynamodb.AttributeValue)
+	bkpStorage.DataPipe = c
+
 	switch action {
 	case "backup":
-		backupTable(tableName, batchSize, time.Duration(waitTime)*time.Millisecond, s3Bucket, s3Folder, s3DateSuffix)
+		backupTable(tableName, batchSize, time.Duration(waitTime)*time.Millisecond, s3Bucket, s3Folder, s3DateSuffix, bkpStorage)
 	case "restore":
-		restoreTable(s3Bucket, s3Folder, tableName, batchSize, time.Duration(waitTime)*time.Millisecond, appendRestore)
+		restoreTable(s3Bucket, s3Folder, tableName, batchSize, time.Duration(waitTime)*time.Millisecond, appendRestore, bkpStorage)
 	default:
 		log.Fatalf("[ERROR] Unknown action given. See help for available actions.")
 	}

@@ -2,13 +2,15 @@ package main
 
 import (
 	"fmt"
+	"reflect"
+	"sync"
+	"testing"
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
-	"reflect"
-	"testing"
-	"time"
 )
 
 // dataSet represents the sets of data used for the tests in Dynamo
@@ -35,16 +37,14 @@ func (m *mockDynamoDBClient) ScanPages(params *dynamodb.ScanInput, pager func(*d
 }
 
 func TestTableToChannel(t *testing.T) {
-	h := AwsHelper{}
-
-	h.DynamoSvc = &mockDynamoDBClient{}
-	h.DataPipe = make(chan map[string]*dynamodb.AttributeValue)
+	var wg sync.WaitGroup
+	dataPipe := make(chan map[string]*dynamodb.AttributeValue)
 
 	// Consumer
 	go func() {
 		// Checks that all the elements of the channel are part of the dataSet
 		idx := 0
-		for elem := range h.DataPipe {
+		for elem := range dataPipe {
 			if !reflect.DeepEqual(elem, dataSet[idx]) {
 				t.Fatalf("Element %d in the channel mismatch. Expecting: %v\nGot: %v\n", idx, dataSet[idx], elem)
 			}
@@ -54,10 +54,12 @@ func TestTableToChannel(t *testing.T) {
 		if idx != len(dataSet) {
 			t.Fatalf("Size of the dataSet is %d, only got %d elements from the channel\n", len(dataSet), idx)
 		}
-		h.Wg.Done()
+		wg.Done()
 	}()
 
-	h.TableToChannel("myTable", 10, time.Duration(42)*time.Millisecond)
+	wg.Add(1)
+	TableToChannel(&mockDynamoDBClient{}, "myTable", 10, time.Duration(42)*time.Millisecond, dataPipe)
+	wg.Wait()
 }
 
 func TestDynamoErrorCheck(t *testing.T) {
