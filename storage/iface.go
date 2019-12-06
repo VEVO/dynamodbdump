@@ -13,7 +13,7 @@ import (
 // BackupIface is the interface that each storage backends implement
 type BackupIface interface {
 	LoadManifest(*FileInput) error
-	GetFile(*FileInput) error
+	GetFile(*FileInput) (*io.ReadCloser, error)
 	Exists(input *FileInput) (bool, error)
 	Flush(input *FileInput, data []byte) error
 	Scan(*io.ReadCloser) error

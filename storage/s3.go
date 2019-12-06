@@ -31,8 +31,8 @@ type S3Backup struct {
 }
 
 // NewS3Backup initlialiaes the s3 client and returns a pointer to a S3Backup struct
-func NewS3Backup(sess *client.ConfigProvider) *S3Backup {
-	return &S3Backup{client: s3.New(*sess), uploader: s3manager.NewUploader(*sess)}
+func NewS3Backup(sess client.ConfigProvider) *S3Backup {
+	return &S3Backup{client: s3.New(sess), uploader: s3manager.NewUploader(sess)}
 }
 
 // LoadManifest downloads the given manifest file and load it in the
@@ -140,7 +140,6 @@ func (h *S3Backup) WriteToDB(tableName string, batchSize int64, waitPeriod time.
 
 	}
 	close(h.DataPipe)
-	wg.Wait()
 	return nil
 }
 
