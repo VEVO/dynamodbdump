@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -146,7 +147,13 @@ func (h *S3Backup) WriteToDB(tableName string, batchSize int64, waitPeriod time.
 // DumpBuffer dumps the content of the given buffer to a new randomly generated
 // file name in the given s3 path in the given bucket and resets the said buffer
 func (h *S3Backup) DumpBuffer(input *FileInput, buff *bytes.Buffer) {
-	*input.Path = fmt.Sprintf("%s/%s", *input.Path, genNewFileName())
+	var splitPath = strings.Split(*input.Path, "/")
+	if len(splitPath) == 2 {
+		splitPath[1] = genNewFileName()
+		*input.Path = fmt.Sprintf("%s/%s", splitPath[0], splitPath[1])
+	} else {
+		*input.Path = fmt.Sprintf("%s/%s", *input.Path, genNewFileName())
+	}
 	if err := h.Flush(input, buff.Bytes()); err != nil {
 		log.Printf("[ERROR] while writing the file %s: %s", *input.Path, err)
 	}
