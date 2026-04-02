@@ -66,7 +66,7 @@ func restoreTable(bucket, prefix, tableName string, batchSize int64, waitPeriod 
 	}
 
 	// Pull the manifest from s3 and load it to memory
-	err = store.LoadManifest(&storage.FileInput{Bucket: aws.String(bucket), Path: aws.String(fmt.Sprintf("%s/_SUCCESS", prefix))})
+	err = store.LoadManifest(&storage.FileInput{Bucket: aws.String(bucket), Path: aws.String(fmt.Sprintf("%s/manifest", prefix))})
 	if err != nil {
 		log.Fatalf("[ERROR] Unable to load the manifest flag information: %s\nAborting...\n", err)
 	}
